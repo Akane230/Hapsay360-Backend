@@ -1,44 +1,20 @@
-import express from "express";
-import { register, login } from "../controllers/auth.controller.js";
+import express from 'express';
 import {
-  authMiddleware,
-  authorizeRoles,
-} from "../middlewares/authMiddleware.js";
+    register,
+    registerAdmin,
+    login,
+    loginAdmin
+} from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
-// ---------- Public Routes ----------
-router.post("/register", register);
-router.post(
-  "/admin/register",
-  (req, res, next) => {
-    req.body.role = "admin";
-    next();
-  },
-  register
-);
-router.post(
-  "/officer/register",
-  (req, res, next) => {
-    req.body.role = "officer";
-    next();
-  },
-  register
-);
-router.post("/login", login);
+// User authentication routes
+router.post('/register', register);
+router.post('/login', login);
 
-// ---------- Protected Test Routes ----------
-router.get("/admin-only", authMiddleware, authorizeRoles("admin"), (req, res) =>
-  res.json({ message: "Hello Admin!" })
-);
-router.get("/user-only", authMiddleware, authorizeRoles("user"), (req, res) =>
-  res.json({ message: "Hello User!" })
-);
-router.get(
-  "/officer-only",
-  authMiddleware,
-  authorizeRoles("officer"),
-  (req, res) => res.json({ message: "Hello Officer!" })
-);
+// Admin authentication routes
+router.post('/admin/register', registerAdmin);
+router.post('/admin/login', loginAdmin);
 
 export default router;
+

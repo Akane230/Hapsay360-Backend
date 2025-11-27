@@ -1,118 +1,132 @@
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
-// Personal Info subdocument
-const personalInfoSchema = new mongoose.Schema(
-  {
-    givenName: { type: String },
-    middleName: { type: String },
-    surname: { type: String },
-    qualifier: { type: String },
-    sex: { type: String, enum: ["Male", "Female"] },
-    civilStatus: { type: String },
-    birthdate: { type: Date },
-    isPWD: { type: Boolean, default: false },
-    isFirstTimeJobSeeker: { type: Boolean, default: false },
-    nationality: { type: String },
-    birthPlace: { type: String },
-    otherCountry: { type: String },
-  },
-  { _id: false }
-);
-
-// Address subdocument
-const addressSchema = new mongoose.Schema(
-  {
-    houseNo: { type: String },
-    street: { type: String },
-    city: { type: String },
-    barangay: { type: String },
-    province: { type: String },
-    postalCode: { type: String },
-    country: { type: String },
-    email: { type: String },
-    mobile: { type: String },
-    telephone: { type: String },
-  },
-  { _id: false }
-);
-
-// Family Info subdocument
-const familySchema = new mongoose.Schema(
-  {
-    father: {
-      given: String,
-      middle: String,
-      surname: String,
-      qualifier: String,
-      birthPlace: String,
-      otherCountry: String,
+// Personal Info subdocument schema
+const personalInfoSchema = new mongoose.Schema({
+    given_name: {
+        type: String,
+        required: true
     },
-    mother: {
-      given: String,
-      middle: String,
-      surname: String,
-      qualifier: String,
-      birthPlace: String,
-      otherCountry: String,
+    middle_name: {
+        type: String,
+        required: true
     },
-    spouse: {
-      given: String,
-      middle: String,
-      surname: String,
-      qualifier: String,
+    surname: {
+        type: String,
+        required: true
     },
-  },
-  { _id: false }
-);
+    qualifier: {
+        type: String,
+        required: false
+    },
+    sex: {
+        type: String,
+        enum: ['Male', 'Female'],
+        required: false
+    },
+    civil_status: {
+        type: String,
+        required: false
+    },
+    birthday: {
+        type: Date,
+        required: false
+    },
+    pwd: {
+        type: Boolean,
+        default: false
+    },
+    nationality: {
+        type: String,
+        required: false
+    }
+}, { _id: false });
 
-// User schema
-const userSchema = new mongoose.Schema(
-  {
+// Address subdocument schema
+const addressSchema = new mongoose.Schema({
+    house_no: {
+        type: String,
+        required: false
+    },
+    street: {
+        type: String,
+        required: true
+    },
+    city: {
+        type: String,
+        required: true
+    },
+    barangay: {
+        type: String,
+        required: true
+    },
+    postal_code: {
+        type: String,
+        required: true
+    },
+    province: {
+        type: String,
+        required: true
+    },
+    country: {
+        type: String,
+        required: true
+    }
+}, { _id: false });
+
+const userSchema = new mongoose.Schema({
     email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
+        type: String,
+        required: true,
+        unique: true
     },
-    password: { type: String, required: true, minlength: 6 },
-    profileImage: { type: String, default: "" },
-    personal_info: { type: personalInfoSchema, required: false }, // optional
-    address: { type: addressSchema },
-    family: { type: familySchema },
-    other_info: {
-      height: String,
-      weight: String,
-      complexion: String,
-      identifyingMarks: String,
-      bloodType: String,
-      religion: String,
-      education: String,
-      occupation: String,
+    password: {
+        type: String,
+        required: true,
+        minlength: 6
     },
-    status: {
-      type: String,
-      enum: ["Active", "Inactive", "Suspended"],
-      default: "Active",
+    phone_number: {
+        type: String,
+        required: false
     },
-    role: { type: String, enum: ["user", "admin"], default: "user" },
-  },
-  { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
-);
-
-// Hash password before saving
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
+    personal_info: {
+        type: personalInfoSchema,
+        required: true
+    },
+    address: {
+        type: addressSchema,
+        required: false
+    },
+    status:{
+        type: String,
+        enum: ['Active', 'Inactive', 'Suspended'],
+        default: 'Active'
+    },
+    last_activity: {
+        type: Date,
+        required: false
+    },
+    created_at: {
+        type: Date,
+        default: Date.now
+    },
+    updated_at: {
+        type: Date,
+        default: Date.now
+    }
 });
 
-// Compare password method
-userSchema.methods.comparePassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+// Update updated_at before saving
+userSchema.pre('save', async function(next) {
+    this.updated_at = Date.now();
+    
+    if (!this.isModified('password')) return next();
 
-const User = mongoose.model("User", userSchema);
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+const User = mongoose.model('User', userSchema);
+
 export default User;

@@ -96,7 +96,37 @@ const userSchema = new mongoose.Schema(
       enum: ["Active", "Inactive", "Suspended"],
       default: "Active",
     },
-    role: { type: String, enum: ["user", "admin"], default: "user" },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    appointments: [
+      {
+        purpose: String,
+        policeStation: String,
+        appointmentDate: Date,
+        timeSlot: String,
+        status: {
+          type: String,
+          enum: ["pending", "confirmed", "cancelled", "completed"],
+          default: "pending",
+        },
+        paymentStatus: {
+          type: String,
+          enum: ["unpaid", "paid"],
+          default: "unpaid",
+        },
+        amount: {
+          type: Number,
+          default: 250,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );

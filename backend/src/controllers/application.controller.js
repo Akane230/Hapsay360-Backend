@@ -1,20 +1,17 @@
-import User from "../models/User.js";
+import ApplicationProfile from "../models/ApplicationProfile.js";
 
 /**
- * Get the current user's application
- * Accessible only to 'user' role
+ * Get current user's application
  */
 export const getApplication = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ profile: null });
-
+    const profile = await ApplicationProfile.findOne({ user: req.user.id });
     res.json({
-      profile: {
-        personal_info: user.personal_info || {},
-        address: user.address || {},
-        other_info: user.other_info || {},
-        family: user.family || {},
+      profile: profile || {
+        personal_info: {},
+        address: {},
+        other_info: {},
+        family: {},
       },
     });
   } catch (err) {
@@ -24,36 +21,41 @@ export const getApplication = async (req, res) => {
 };
 
 /**
- * Save or update the current user's application
- * Accessible only to 'user' role
+ * Save or update current user's application
  */
 export const saveApplication = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const { personal_info, address, family, other_info } = req.body;
 
-    const { personal_info, address, other_info, family } = req.body;
+    let profile = await ApplicationProfile.findOne({ user: req.user.id });
 
-    // Ensure user objects exist before merging
-    user.personal_info = {
-      ...(user.personal_info || {}),
-      ...(personal_info || {}),
-    };
-    user.address = { ...(user.address || {}), ...(address || {}) };
-    user.other_info = { ...(user.other_info || {}), ...(other_info || {}) };
-    user.family = { ...(user.family || {}), ...(family || {}) };
+    if (!profile) {
+      // Create new profile
+      profile = new ApplicationProfile({
+        user: req.user.id,
+        personal_info,
+        address,
+        family,
+        other_info,
+      });
+    } else {
+      // Merge updates for partial update
+      profile.personal_info = {
+        ...(profile.personal_info || {}),
+        ...personal_info,
+      };
+      profile.address = { ...(profile.address || {}), ...address };
+      profile.family = { ...(profile.family || {}), ...family };
+      profile.other_info = { ...(profile.other_info || {}), ...other_info };
+    }
 
-    await user.save();
+    // Save to MongoDB (Mongoose will enforce schema validation)
+    await profile.save();
 
     res.json({
       success: true,
       message: "Application form saved successfully",
-      profile: {
-        personal_info: user.personal_info,
-        address: user.address,
-        other_info: user.other_info,
-        family: user.family,
-      },
+      profile,
     });
   } catch (err) {
     console.error(err);
@@ -62,22 +64,15 @@ export const saveApplication = async (req, res) => {
 };
 
 /**
- * Admin can get any user's application by ID
- * Accessible only to 'admin' role
+ * Admin: get any user's application by user ID
  */
 export const getUserApplicationById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const profile = await ApplicationProfile.findOne({ user: req.params.id });
+    if (!profile)
+      return res.status(404).json({ message: "Application profile not found" });
 
-    res.json({
-      profile: {
-        personal_info: user.personal_info || {},
-        address: user.address || {},
-        other_info: user.other_info || {},
-        family: user.family || {},
-      },
-    });
+    res.json({ profile });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

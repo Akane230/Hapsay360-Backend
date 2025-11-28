@@ -18,7 +18,6 @@ router.get(
   authorizeRoles("user"),
   getApplication
 );
-
 router.post(
   "/my-application",
   authMiddleware,
